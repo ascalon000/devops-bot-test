@@ -94,3 +94,17 @@ jobs:
           *Владелец:* `${{ steps.release_info.outputs.owner }}`
           *Название:* `${{ steps.release_info.outputs.repo_name }}`
           *Полное имя:* `${{ steps.release_info.outputs.docker_full_name }}`
+
+    - name: Run tests
+      run: |
+        pip install pytest-asyncio
+        pytest tests/ -v --tb=short --cov=src --cov-report=xml
+
+    - name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_PROJECT_KEY: ${{ github.repository_owner }}
+        SONAR_ORGANIZATION: ${{ github.repository_owner }}
+    
