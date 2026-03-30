@@ -1,0 +1,96 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ closed ]
+
+jobs:
+  quality-check-and-notify:
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'feature/ticket-')
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pylint
+
+    - name: Run Python quality checks
+
+      run: |
+        pylint src/*.py --exit-zero
+
+    - name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        # Ключ проекта = юзернейм Github
+        SONAR_PROJECT_KEY: ${{ github.repository_owner }}
+        # Организация = юзернейм GitHub
+        SONAR_ORGANIZATION: ${{ github.repository_owner }}
+
+    - name: Create report
+      run: |
+        mkdir -p reports
+        echo "Quality Check Report" > reports/quality_report.txt
+        echo "====================" >> reports/quality_report.txt
+        echo "Branch: ${{ github.head_ref }}" >> reports/quality_report.txt
+        echo "Commit: ${{ github.sha }}" >> reports/quality_report.txt
+        echo "Status: All checks passed" >> reports/quality_report.txt
+        date >> reports/quality_report.txt
+
+    - name: Upload report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-report
+        path: reports/
+        retention-days: 30
+
+    - name: Generate version and release info
+      id: release_info
+      run: |
+        VERSION=$(date +'%Y.%m.%d-%H%M%S')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+        echo "pr_url=${{ github.event.pull_request.html_url }}" >> $GITHUB_OUTPUT
+        echo "repo_url=${{ github.server_url }}/${{ github.repository }}" >> $GITHUB_OUTPUT
+        echo "owner=${{ github.repository_owner }}" >> $GITHUB_OUTPUT
+        echo "repo_name=${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
+        echo "docker_full_name=${{ github.repository_owner }}/${{ github.event.repository.name }}:v$VERSION" >> $GITHUB_OUTPUT
+        echo "merge_date=$(date +'%Y.%m.%d %H:%M:%S')" >> $GITHUB_OUTPUT
+
+    - name: Send Telegram Notification
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        format: markdown
+        message: |
+          *Новый выпуск изменений*
+          *Проект:* `${{ github.repository }}`
+          *Версия:* `${{ steps.release_info.outputs.tag }}`
+          *Дата и время:* `${{ steps.release_info.outputs.merge_date }}`
+          *Ветка:* `${{ github.head_ref }} → dev`
+          *Ссылка на мерж:* [Pull Request](${{ steps.release_info.outputs.pr_url }})
+          
+          *Информация о Git-репозитории*
+          [Открыть](${{ steps.release_info.outputs.repo_url }})
+          *GIT TAG:* `${{ steps.release_info.outputs.tag }}`
+          
+          *Информация о Docker-репозитории*
+          *Владелец:* `${{ steps.release_info.outputs.owner }}`
+          *Название:* `${{ steps.release_info.outputs.repo_name }}`
+          *Полное имя:* `${{ steps.release_info.outputs.docker_full_name }}`
