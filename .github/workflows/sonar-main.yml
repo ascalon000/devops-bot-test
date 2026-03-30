@@ -1,0 +1,31 @@
+name: SonarQube Main Branch
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate sonar-project.properties
+      run: |
+        cat > sonar-project.properties << EOF
+        sonar.projectKey=ascalon000
+        sonar.organization=ascalon000
+        sonar.sources=.
+        sonar.sourceEncoding=UTF-8
+        sonar.python.version=3.11
+        sonar.exclusions=**/.venv/**
+        EOF
+
+    - name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
