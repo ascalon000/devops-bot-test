@@ -32,16 +32,16 @@ jobs:
       run: |
         pylint src/*.py --exit-zero
 
-    - name: Generate sonar-project.properties
-      run: |
-        cat > sonar-project.properties << EOF
-        sonar.projectKey=${{ github.repository_owner }}
-        sonar.organization=${{ github.repository_owner }}
-        sonar.sources=.
-        sonar.sourceEncoding=UTF-8
-        sonar.python.version=3.11
-        sonar.exclusions=**/.venv/**
-        EOF
+    # - name: Generate sonar-project.properties
+    #   run: |
+    #     cat > sonar-project.properties << EOF
+    #     sonar.projectKey=${{ github.repository_owner }}
+    #     sonar.organization=${{ github.repository_owner }}
+    #     sonar.sources=.
+    #     sonar.sourceEncoding=UTF-8
+    #     sonar.python.version=3.11
+    #     sonar.exclusions=**/.venv/**
+    #     EOF
 
     - name: SonarQube Scan
       uses: sonarsource/sonarqube-scan-action@master
