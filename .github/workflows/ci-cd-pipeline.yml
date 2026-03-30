@@ -32,16 +32,22 @@ jobs:
       run: |
         pylint src/*.py --exit-zero
 
+    - name: Generate sonar-project.properties
+      run: |
+        cat > sonar-project.properties << EOF
+        sonar.projectKey=${{ github.repository_owner }}
+        sonar.organization=${{ github.repository_owner }}
+        sonar.sources=.
+        sonar.sourceEncoding=UTF-8
+        sonar.python.version=3.11
+        sonar.exclusions=**/.venv/**
+        EOF
+
     - name: SonarQube Scan
       uses: sonarsource/sonarqube-scan-action@master
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      with:
-        # Ключ проекта = юзернейм Github
-        projectKey: ${{ github.repository_owner }}
-        # Организация = юзернейм GitHub
-        organization: ${{ github.repository_owner }}
 
     - name: Create report
       run: |
