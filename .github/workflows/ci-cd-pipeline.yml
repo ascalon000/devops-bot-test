@@ -37,10 +37,11 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      with:
         # Ключ проекта = юзернейм Github
-        SONAR_PROJECT_KEY: ${{ github.repository_owner }}
+        projectKey: ${{ github.repository_owner }}
         # Организация = юзернейм GitHub
-        SONAR_ORGANIZATION: ${{ github.repository_owner }}
+        organization: ${{ github.repository_owner }}
 
     - name: Create report
       run: |
