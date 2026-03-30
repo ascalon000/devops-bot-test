@@ -68,21 +68,22 @@ jobs:
 
     - name: Generate version and release info
       id: release_info
-      HEAD_REF: ${{ github.head_ref }}
-      REPO: ${{ github.repository }}
-      OWNER: ${{ github.repository_owner }}
-      REPO_NAME: ${{ github.event.repository.name }}
+      env:
+        HEAD_REF: ${{ github.head_ref }}
+        REPO: ${{ github.repository }}
+        OWNER: ${{ github.repository_owner }}
+        REPO_NAME: ${{ github.event.repository.name }}
       run: |
         VERSION=$(date +'%Y.%m.%d-%H%M%S')
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag=v$VERSION" >> $GITHUB_OUTPUT
         echo "pr_url=${{ github.event.pull_request.html_url }}" >> $GITHUB_OUTPUT
-        echo "repo_url=${{ github.server_url }}/$REPO" >> $GITHUB_OUTPUT
-        echo "owner=$OWNER" >> $GITHUB_OUTPUT
-        echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
-        echo "docker_full_name=$OWNER/$REPO_NAME:v$VERSION" >> $GITHUB_OUTPUT
+        echo "repo_url=${{ github.server_url }}/${REPO}" >> $GITHUB_OUTPUT
+        echo "owner=${OWNER}" >> $GITHUB_OUTPUT
+        echo "repo_name=${REPO_NAME}" >> $GITHUB_OUTPUT
+        echo "docker_full_name=${OWNER}/${REPO_NAME}:v$VERSION" >> $GITHUB_OUTPUT
         echo "merge_date=$(date +'%Y.%m.%d %H:%M:%S')" >> $GITHUB_OUTPUT
-        echo "branch=$HEAD_REF" >> $GITHUB_OUTPUT
+        echo "branch=${HEAD_REF}" >> $GITHUB_OUTPUT
 
     - name: Send Telegram Notification
       uses: appleboy/telegram-action@master
